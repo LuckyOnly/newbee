@@ -6,18 +6,10 @@ import os
 import sys
 import threading
 import functools
+import time
 reload(sys)
 sys.setdefaultencoding('utf-8')
 # get the database configure
-cf = ConfigParser.ConfigParser()
-path = os.path.dirname(os.path.abspath(__file__))
-cf.read(path+r'\db1.cfg')
-secs = cf.sections()
-host = cf.get('db', 'host')
-user = cf.get('db', 'username')
-password = cf.get('db', 'passwd')
-database = cf.get('db', 'database')
-port = int(cf.get('db', 'port'))
 
 
 class Dict(dict):
@@ -82,7 +74,6 @@ class _DbCtx(threading.local):
 
     def cursor(self):
         return self.connection.cursor()
-
 
 
 
@@ -228,6 +219,7 @@ def _update(sql, *args):
             _db_ctx.connection.commit()
         return r
     except Exception as e:
+        print e
         logging.info(e)
     finally:
         if cursor:
@@ -261,8 +253,28 @@ def update(sql,*args):
 
     return _update(sql,*args)
 
+def insert(table,**kw):
+    cols,args = zip(*kw.iteritems())
+    sql = 'insert into `%s`(%s) values (%s)' % (table,','.join(['`%s`' %  col for col in cols]),','.join(['?' for i in range(len(cols))]))
+    return _update(sql, *args)
+
+import uuid
+def next_id(t=None):
+    if t is None:
+        t = time.time()
+    return '%015d%s000' % (int(t*1000),uuid.uuid4().hex)
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
+    cf = ConfigParser.ConfigParser()
+    path = os.path.dirname(os.path.abspath(__file__))
+    cf.read(path + r'\db1.cfg')
+    secs = cf.sections()
+    host = cf.get('db', 'host')
+    user = cf.get('db', 'username')
+    password = cf.get('db', 'passwd')
+    database = cf.get('db', 'database')
+    port = int(cf.get('db', 'port'))
     create_engine(user=user,password=password,database=database,host=host,port=port)
     u = select('select * from department where id = ?',1)
     print u
