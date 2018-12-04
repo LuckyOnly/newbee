@@ -264,6 +264,6 @@ if __name__ == "__main__":
     # u = select('select * from department where id = ?',1)
     # print u
     update('drop table if exists user')
-    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+    # update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
     import doctest
     doctest.testmod()
