@@ -6,10 +6,18 @@ import os
 import sys
 import threading
 import functools
-import time
 reload(sys)
 sys.setdefaultencoding('utf-8')
 # get the database configure
+cf = ConfigParser.ConfigParser()
+path = os.path.dirname(os.path.abspath(__file__))
+cf.read(path+r'\db1.cfg')
+secs = cf.sections()
+host = cf.get('db', 'host')
+user = cf.get('db', 'username')
+password = cf.get('db', 'passwd')
+database = cf.get('db', 'database')
+port = int(cf.get('db', 'port'))
 
 
 class Dict(dict):
@@ -27,57 +35,6 @@ class Dict(dict):
     def __setattr__(self, key, value):
         self[key]=value
 
-class _Engine(object):
-    def __init__(self,connect):
-        self._connect = connect
-
-    def connect(self):
-        return self._connect()
-
-
-engine = None
-
-
-def create_engine(user, password, database, host, port, **kw):
-    import MySQLdb
-    import mysql.connector
-    global engine
-    if engine is not None:
-        logging.info('Engine is already initialized.')
-    params = dict(user=user,password=password,database=database,host=host,port=port)
-    defaluts = dict(use_unicode=True,charset='utf8',collation='utf8_general_ci',autocommit=False)
-    for k,v in defaluts.iteritems():
-        params[k]=kw.pop(k,v)
-    params.update(kw)
-    params['buffered']=True
-    # engine = _Engine(lambda :MySQLdb.connect(**params))
-    # engine = _Engine(lambda :mysql.connector.connect(**params))
-    engine = mysql.connector.connect(**params)
-    logging.info('init mysql engine <%s> ok'% hex(id(engine)))
-#数据库连接上下文对象
-
-
-class _DbCtx(threading.local):
-
-    # Thread local object that holds connection info.
-    def __init__(self):
-        self.connection = None
-        self.transactions =0
-
-    def is_init(self):
-        return not self.connection is None
-
-    def init(self):
-        self.connection = _LasyConnection()
-        self.transactions =0
-
-    def cleanup(self):
-        self.connection.cleanup()
-        self.connection=None
-
-    def cursor(self):
-        return self.connection.cursor()
-
 
 class _LasyConnection(object):
 
@@ -86,9 +43,9 @@ class _LasyConnection(object):
 
     def cursor(self):
         if self.connection is None:
-            connection = engine
+            connection = engine.connect()
             logging.info('open connection <%s>...' % hex(id(connection)))
-            self.connection=engine
+            self.connection=connection
         return self.connection.cursor()
 
     def commit(self):
@@ -104,7 +61,30 @@ class _LasyConnection(object):
             logging.info('close connection')
             connection.close()
 
-_db_ctx = _DbCtx()
+class _DbCtx(threading.local):
+
+    # Thread local object that holds connection info.
+    def __init__(self):
+        self.connection = None
+        self.transactions =0
+
+    def is_init(self):
+        return not self.connection is None
+
+    def init(self):
+        logging.info('open lazy connection...')
+        self.connection = _LasyConnection()
+        self.transactions =0
+
+    def cleanup(self):
+        self.connection.cleanup()
+        self.connection=None
+
+    def cursor(self):
+        return self.connection.cursor()
+
+
+
 
 
 class _TransactionCtx(object):
@@ -161,6 +141,37 @@ def with_transaction(func):
             return func(*args,**kw)
     return _wrapper
 
+_db_ctx = _DbCtx()
+
+engine = None
+
+class _Engine(object):
+    def __init__(self,connect):
+        self._connect = connect
+
+    def connect(self):
+        return self._connect()
+
+
+
+def create_engine(user, password, database, host, port, **kw):
+    import MySQLdb
+    import mysql.connector
+    global engine
+    if engine is not None:
+        logging.info('Engine is already initialized.')
+    params = dict(user=user,password=password,database=database,host=host,port=port)
+    defaluts = dict(use_unicode=True,charset='utf8',collation='utf8_general_ci',autocommit=False)
+    for k,v in defaluts.iteritems():
+        params[k]=kw.pop(k,v)
+    params.update(kw)
+    params['buffered']=True
+    # engine = _Engine(lambda :MySQLdb.connect(**params))
+    engine = _Engine(lambda :mysql.connector.connect(**params))
+    # engine = mysql.connector.connect(**params)
+    logging.info('init mysql engine <%s> ok'% hex(id(engine)))
+#数据库连接上下文对象
+
 
 class _ConnectionCtx(object):
     '''
@@ -209,7 +220,7 @@ def _update(sql, *args):
     sql = sql.replace('?','%s')
     logging.info('sql:%s,args:%s' % (sql, args))
     try:
-        cursor = _db_ctx.cursor()
+        cursor = _db_ctx.connection.cursor()
         cursor.execute(sql, args)
         r = cursor.rowcount
         if _db_ctx.transactions == 0:
@@ -217,7 +228,6 @@ def _update(sql, *args):
             _db_ctx.connection.commit()
         return r
     except Exception as e:
-        print e
         logging.info(e)
     finally:
         if cursor:
@@ -230,7 +240,7 @@ def _select(sql,first,*args):
     sql = sql.replace('?','%s')
     logging.info('sql:%s,args:%s' % (sql,args))
     try:
-        cursor = _db_ctx.cursor()
+        cursor = _db_ctx.connection.cursor()
         cursor.execute(sql,args)
         if cursor.description:
             names = [x[0] for x in cursor.description]
@@ -251,42 +261,14 @@ def update(sql,*args):
 
     return _update(sql,*args)
 
-def insert(table,**kw):
-    cols,args = zip(*kw.iteritems())
-    sql = 'insert into `%s`(%s) values (%s)' % (table,','.join(['`%s`' %  col for col in cols]),','.join(['?' for i in range(len(cols))]))
-    return _update(sql, *args)
-
-import uuid
-def next_id(t=None):
-    if t is None:
-        t = time.time()
-    return '%015d%s000' % (int(t*1000),uuid.uuid4().hex)
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    cf = ConfigParser.ConfigParser()
-    path = os.path.dirname(os.path.abspath(__file__))
-    cf.read(path + r'\db1.cfg')
-    secs = cf.sections()
-    host = cf.get('db', 'host')
-    user = cf.get('db', 'username')
-    password = cf.get('db', 'passwd')
-    database = cf.get('db', 'database')
-    port = int(cf.get('db', 'port'))
     create_engine(user=user,password=password,database=database,host=host,port=port)
-    u1 = select('select * from department where id = ?',1)
-    print u1
+    u = select('select * from department where id = ?',1)
+    print u
     u2 = select('select * from department where id = ?', 2)
     print u2
-
-    # u = engine.cursor()
-    # print u
-    # u.close()
-    # s= engine.cursor()
-    # print s
-
-
-    # update('drop table if exists user')
-    # update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+    update('drop table if exists user')
+    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
     # import doctest
     # doctest.testmod()
