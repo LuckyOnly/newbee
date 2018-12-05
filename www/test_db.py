@@ -18,13 +18,13 @@ port = int(cf.get('db', 'port'))
 db.create_engine(user=user,password=password,database=database,host=host,port=port)
 logging.basicConfig(level=logging.DEBUG)
 
-# u = User(name='Test', email='test@example2.com',password='1234567',image='about:blank',admin = 0)
+# u = User(name='Test', email='test@example.com',password='1234567',image='about:blank',admin = 0)
 #
 # u.insert()
 
 # u1 = User.find_first('select * from users where admin = ?',1)
-u1 = User.find_first('where admin = ?',1)
-db.create_engine(user=user,password=password,database=database,host=host,port=port)
+u1 = User.find_first('where admin = ?',0)
+print u1
 u1.delete()
 
 

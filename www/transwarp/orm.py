@@ -21,13 +21,15 @@ def _gen_sql(table_name, mappings):
     sql.append('  primary key(`%s`)' % pk)
     sql.append(');')
     return '\n'.join(sql)
+
+
 class ModelMetaclass(type):
     '''
     Metaclass for model objects.
     '''
     def __new__(cls, name, bases, attrs):
         # skip base Model class:
-        if name=='Model':
+        if name == 'Model':
             return type.__new__(cls, name, bases, attrs)
 
         # store all subclasses info:
