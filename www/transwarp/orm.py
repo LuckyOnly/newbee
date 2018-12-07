@@ -135,6 +135,10 @@ class Model(dict):
         # d = db._select(where,True, *args)
         return cls(**d) if d else None
 
+    @classmethod
+    def find_all(cls,where,*args):
+        d = db._select('select * from %s %s' % (cls.__table__,where),False,*args)
+        return cls(**d) if d else None
 
 class Field(object):
 

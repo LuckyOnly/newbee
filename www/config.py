@@ -29,7 +29,7 @@ except ImportError:
     pass
 
 configs = toDict(configs)
-print configs
+
 
 
 

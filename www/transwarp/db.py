@@ -5,7 +5,7 @@ import ConfigParser
 import os
 import sys
 import threading
-import functools
+import functools,time,uuid
 reload(sys)
 sys.setdefaultencoding('utf-8')
 # get the database configure
@@ -83,8 +83,10 @@ class _DbCtx(threading.local):
     def cursor(self):
         return self.connection.cursor()
 
-
-
+def next_id(t=None):
+    if t is None:
+        t = time.time()
+    return '%015d%s000' % (int(t * 1000), uuid.uuid4().hex)
 
 
 class _TransactionCtx(object):
@@ -261,6 +263,11 @@ def update(sql,*args):
 
     return _update(sql,*args)
 
+def insert(table, **kw):
+    cols, args = zip(*kw.iteritems())
+    sql = 'insert into `%s` (%s) values (%s)' % (table, ','.join(['`%s`' % col for col in cols]), ','.join(['?' for i in range(len(cols))]))
+    return _update(sql, *args)
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     create_engine(user=user,password=password,database=database,host=host,port=port)
@@ -268,7 +275,7 @@ if __name__ == "__main__":
     print u
     u2 = select('select * from department where id = ?', 2)
     print u2
-    update('drop table if exists user')
-    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+    # update('drop table if exists user')
+    # update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
     # import doctest
     # doctest.testmod()
