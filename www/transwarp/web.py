@@ -628,6 +628,7 @@ class WSGIApplication(object):
         def wsgi(env, start_response):
             ctx.application = _application
             ctx.request = Request(env)
+            print '环境是',env,start_response
             response = ctx.response = Response()
             try:
                 r = fn_exec()
@@ -668,8 +669,17 @@ class WSGIApplication(object):
 
         return wsgi
 
+def _get_page_index():
+    page_index = 1
+    try:
+        page_index = int(ctx.request.get('page', '1'))
+    except ValueError:
+        pass
+    return page_index
 
-
+if __name__=='__main__':
+    import time
+    print time.time()
 
 
 

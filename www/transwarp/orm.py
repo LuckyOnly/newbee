@@ -137,8 +137,18 @@ class Model(dict):
 
     @classmethod
     def find_all(cls,where,*args):
-        d = db._select('select * from %s %s' % (cls.__table__,where),False,*args)
-        return cls(**d) if d else None
+        L = db._select('select * from %s %s' % (cls.__table__,where),False,*args)
+        return [cls(**d) for d in L]
+
+    @classmethod
+    def count_all(cls):
+        return db.select_int('select count(`%s`) from `%s`' % (cls.__primary_key__.name,cls.__table__))
+
+    @classmethod
+    def find_by(cls,where, *args):
+        L = db.select('select * from `%s` %s' % (cls.__table__, where),*args)
+        return [cls(**d) for d in L]
+
 
 class Field(object):
 

@@ -256,6 +256,13 @@ def _select(sql,first,*args):
         if cursor:
             cursor.close()
 
+@with_connection
+def select_int(sql, *args):
+    d = _select(sql,True,*args)
+    if len(d)!=1:
+        raise ('Except only one column.')
+    return d.values()[0]
+
 def select(sql,*args):
     return _select(sql,False,*args)
 

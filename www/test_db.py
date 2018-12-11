@@ -17,15 +17,18 @@ database = cf.get('db', 'database')
 port = int(cf.get('db', 'port'))
 db.create_engine(user=user,password=password,database=database,host=host,port=port)
 logging.basicConfig(level=logging.DEBUG)
-
-# u = User(name='Test', email='test@example4.com',password='1234567',image='about:blank',admin = 0)
-#
+# 添加
+# u = User(name='Test', email='test@example5.com',password='1234567',image='about:blank',admin = 0)
 # u.insert()
-
+# 查找
 # u1 = User.find_first('select * from users where admin = ?',1)
-u1 = User.find_first('where admin = ?',0)
-print u1
+# u1 = User.find_first('where admin = ?',0)
+blogs = Blog.find_all("where 1=1")
+print blogs
+# print u1
+# 删除
 # u1.delete()
+
 
 
 
