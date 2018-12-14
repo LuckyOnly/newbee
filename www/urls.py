@@ -8,28 +8,44 @@ from apis import api,Page
 def _get_page_index():
     page_index = 1
     try:
+        print ctx.request.get('page','1')
         page_index = int(ctx.request.get('page','1'))
     except ValueError:
         pass
     return page_index
 
 # @view('test_users.html')
-@get('/')
+@get('/demo')
 def test_users():
     users = User.find_first('where admin = ?',0)
     # return dict(users=users)
     return '<h1>hello</h1>'
 
 @view('test_users.html')
-@get('/')
+@get('/test')
 def test_users():
     users = User.find_first('where admin = ?',0)
     # print users.name
     return dict(users=users)
     # return '<h1>hello</h1>'
 
+
+
+
+def _get_blogs_by_page():
+    total = Blog.count_all()
+    page = Page(total, _get_page_index())
+    blogs = Blog.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
+    return blogs, page
+
 @view('blogs.html')
-@get('/blogs')
+@get('/123')
+def index():
+    blogs, page = _get_blogs_by_page()
+    return dict(page=page, blogs=blogs, user=ctx.request.user)
+
+@view('blogs1.html')
+@get('/blogs1')
 def index():
     blogs = Blog.find_all("where 1=1")
     total = Blog.count_all()
