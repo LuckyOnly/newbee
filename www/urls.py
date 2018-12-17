@@ -1,6 +1,6 @@
 # coding:utf-8
 
-from transwarp.web import get, view,ctx
+from transwarp.web import get, view,ctx,post
 from models import User, Blog, Comment
 from apis import api,Page
 
@@ -64,6 +64,35 @@ def api_get_users():
     for u in users:
         u.password = "****"
     return dict(users=users,page=page)
+
+
+import re,hashlib
+_RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
+_RE_EMAIL = re.compile(r'[0-9a-z\.\-\_]+\@[0-9a-z\.\-\_]+(\.[0-9a-z\.\-\_]+){1,4}')
+@api
+@post('api/users')
+def register_user():
+    i = ctx.request.input(name='',email='',password='')
+    name = i.name.strip()
+    email = i.email.strip().lower()
+    password = i.password
+    if not name:
+        raise 'name is wrong'
+    if not email or not _RE_EMAIL.match(email):
+        raise 'email is wrong'
+    if not password or _RE_MD5.match(password):
+        raise 'password is wrong'
+    user = User.find_first('where email=?',email)
+    if user:
+        raise 'email has already existed'
+    user = User(name = name,email=email,password=password,image='http://www.gravatar.com/avatar/%s?d=mm&s=120' % hashlib.md5(email).hexdigest(),admin = 1)
+    user.insert()
+    return user
+
+
+
+
+
 
 
 
