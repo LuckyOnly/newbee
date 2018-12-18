@@ -55,7 +55,7 @@ def index():
     return dict(blogs=blogs, user=user,page=page)
 
 @api
-@get('/api/users')
+@get('/api/user')
 def api_get_users():
     total = User.count_all()
     # page = Page(total,_get_page_index())
@@ -69,6 +69,8 @@ def api_get_users():
 import re,hashlib
 _RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
 _RE_EMAIL = re.compile(r'[0-9a-z\.\-\_]+\@[0-9a-z\.\-\_]+(\.[0-9a-z\.\-\_]+){1,4}')
+
+
 @api
 @post('api/users')
 def register_user():
@@ -89,8 +91,10 @@ def register_user():
     user.insert()
     return user
 
-
-
+@view('register.html')
+@get('/register')
+def register():
+    return dict()
 
 
 

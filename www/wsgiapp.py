@@ -3,7 +3,7 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 import os
-import datetime
+from datetime import datetime
 import time
 from transwarp import db
 from transwarp.web import WSGIApplication, Jinja2TemplateEngine
