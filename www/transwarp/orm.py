@@ -133,6 +133,7 @@ class Model(dict):
         '''
         d = db._select('select * from %s %s' % (cls.__table__, where),True, *args)
         # d = db._select(where,True, *args)
+        print 'testing',d
         return cls(**d) if d else None
 
     @classmethod

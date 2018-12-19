@@ -2,7 +2,7 @@
 
 from transwarp.web import get, view,ctx,post
 from models import User, Blog, Comment
-from apis import api,Page
+from apis import api,Page,APIValueError
 
 
 def _get_page_index():
@@ -69,24 +69,29 @@ def api_get_users():
 import re,hashlib
 _RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
 _RE_EMAIL = re.compile(r'[0-9a-z\.\-\_]+\@[0-9a-z\.\-\_]+(\.[0-9a-z\.\-\_]+){1,4}')
+                        # /^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$/;
+# _RE_EMAIL = re.compile(r'^[0-9A-Za-z][\.-_0-9A-Za-z]*@[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+$')
 
 
 @api
-@post('api/users')
+@post('/api/users')
 def register_user():
     i = ctx.request.input(name='',email='',password='')
-    name = i.name.strip()
-    email = i.email.strip().lower()
-    password = i.password
-    if not name:
-        raise 'name is wrong'
-    if not email or not _RE_EMAIL.match(email):
-        raise 'email is wrong'
-    if not password or _RE_MD5.match(password):
-        raise 'password is wrong'
+    print i
+    # i = {'password': u'c8837b23ff8aaa8a2dde915473ce0991', 'name': u'3', 'email': u'11047670764@qq.com'}
+    name = i['name'].strip()
+    email = i['email'].strip().lower()
+    password = i['password']
+    print name, email, password
+    # if not name:
+    #     raise APIValueError('name is wrong')
+    # if not email or not _RE_EMAIL.match(email):
+    #     raise APIValueError('email is wrong')
+    # if not password or _RE_MD5.match(password):
+    #     raise APIValueError('password is wrong')
     user = User.find_first('where email=?',email)
     if user:
-        raise 'email has already existed'
+        raise APIValueError('email has already existed')
     user = User(name = name,email=email,password=password,image='http://www.gravatar.com/avatar/%s?d=mm&s=120' % hashlib.md5(email).hexdigest(),admin = 1)
     user.insert()
     return user

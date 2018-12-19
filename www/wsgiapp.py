@@ -8,7 +8,7 @@ import time
 from transwarp import db
 from transwarp.web import WSGIApplication, Jinja2TemplateEngine
 from config import configs
-db.create_engine(configs.db.username,configs.db.password,configs.db.database,configs.db.host,configs.db.port)
+db.create_engine(configs['db']['username'],configs['db']['password'],configs['db']['database'],configs['db']['host'],configs['db']['port'])
 def datetime_filter(t):
     delta = int(time.time() - t)
     if delta < 60:
