@@ -26,12 +26,18 @@ class Page(object):
 
     __repr__ = __str__
 
+
+
 class APIError(StandardError):
     def __init__(self,error,data='',message=''):
         super(APIError,self).__init__(message)
         self.error = error
         self.data = data
         self.message = message
+
+class APIPermissionError(APIError):
+    def __init__(self,message=''):
+        super(APIPermissionError,self).__init__('permission:forbidden','permisson',message)
 
 class APIValueError(APIError):
     '''

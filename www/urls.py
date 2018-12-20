@@ -1,9 +1,9 @@
 # coding:utf-8
 
-from transwarp.web import get, view,ctx,post,interceptor
+from transwarp.web import get, view,ctx,post,interceptor,seeother
 from models import User, Blog, Comment
-from apis import api,Page,APIValueError
-from  configs import configs
+from apis import api,Page,APIValueError,APIError,APIPermissionError
+from configs import configs
 import time,logging
 _COOKIE_NAME='zongff'
 _COOKIE_KEY=configs['session']['secret']
@@ -30,15 +30,49 @@ def parse_signed_cookie(cookie_str):
     except:
         return None
 
+def check_admin():
+    user = ctx.request.user
+    if user and user.admin:
+        return
+    raise APIPermissionError('No permission')
 
 def _get_page_index():
     page_index = 1
     try:
-        print ctx.request.get('page','1')
         page_index = int(ctx.request.get('page','1'))
     except ValueError:
         pass
     return page_index
+
+def _get_blogs_by_page():
+    total = Blog.count_all()
+    page= Page(total,_get_page_index())
+    blogs = Blog.find_by('order by created_at desc limit ?,?',page.offset,page.limit)
+    return blogs,page
+
+@api
+@get('/get/blogs')
+def api_get_blogs():
+    blogs,page=_get_blogs_by_page()
+    return dict(blogs=blogs,page=page)
+
+@view('manage_blog_list.html')
+@get('/manage/blogs')
+def manage_blogs():
+    # return dict(page_index=_get_blogs_by_page(),user=ctx.request.user)
+    return dict(page_index=_get_blogs_by_page())
+
+
+@api
+@post('/api/comments/:comment_id/delete')
+def api_delete_comment(comment_id):
+    check_admin()
+    comment = Comment.get(comment_id)
+    if comment is None:
+        raise APIValueError('comment')
+    comment.delete()
+    raise dict(id=comment_id)
+
 
 # @view('test_users.html')
 @get('/demo')
@@ -67,6 +101,13 @@ def user_interceptor(next):
             logging.info('bind user <%s> to seesion...' % user.email)
     ctx.request.user=user
     return next()
+
+@interceptor('/manage')
+def manage_interceptor(next):
+    user = ctx.request.user
+    if user and user.admin:
+        return next()
+    raise seeother('/signin')
 
 def _get_blogs_by_page():
     total = Blog.count_all()
@@ -105,16 +146,16 @@ def api_get_users():
 @api
 @post('/api/authenticate')
 def authenticate():
-    i = ctx.request.input(remeber='')
+    i = ctx.request.input(remember='')
     email = i['email'].strip().lower()
     password = i['password']
-    remeber = i['remeber']
+    remember = i['remember']
     user = User.find_first('where email=?',email)
     if user is None:
-        raise APIValueError('auth:failed','email','Invalid email')
+        raise APIError('auth:failed','email','Invalid email')
     elif user.password != password:
-        raise APIValueError('auth: failed','password','Invalid password')
-    max_age = 604800 if remeber == 'true' else None
+        raise APIError('auth: failed','password','Invalid password')
+    max_age = 604800 if remember == 'true' else None
     cookie = make_signed_cookie(user.id,user.password,max_age=max_age)
     user.password = '******'
     return user
@@ -167,12 +208,26 @@ def api_create_blog():
     blog.insert()
     return blog
 
+# 登录
+@view('signin.html')
+@get('/signin')
+def signin():
+    return dict()
 
+@get('signout')
+def signout():
+    ctx.response.delete_cookie(_COOKIE_NAME)
+    raise seeother('/')
 
+#注册
 @view('register.html')
 @get('/register')
 def register():
     return dict()
+
+@get('/manage/')
+def manage_index():
+    raise seeother('/manage/comments')
 
 @view('manage_blog_edit.html')
 @get('/manage/blogs/create')
