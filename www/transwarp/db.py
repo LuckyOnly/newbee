@@ -263,6 +263,10 @@ def select_int(sql, *args):
         raise ('Except only one column.')
     return d.values()[0]
 
+@with_connection
+def select_one(sql,*args):
+    return _select(sql,True,*args)
+
 def select(sql,*args):
     return _select(sql,False,*args)
 

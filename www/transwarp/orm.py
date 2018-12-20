@@ -118,6 +118,15 @@ class Model(dict):
         db.insert('%s' % self.__table__,**params)
         return self
 
+    @classmethod
+    def get(cls, pk):
+        '''
+        Get by primary key.
+        '''
+        d = db.select_one('select * from %s where %s=?' % (cls.__table__, cls.__primary_key__.name), pk)
+
+        return cls(**d) if d else None
+
     def delete(self):
         self.pre_delete and self.pre_delete()
         pk = self.__primary_key__.name
@@ -133,7 +142,7 @@ class Model(dict):
         '''
         d = db._select('select * from %s %s' % (cls.__table__, where),True, *args)
         # d = db._select(where,True, *args)
-        print 'testing',d
+
         return cls(**d) if d else None
 
     @classmethod

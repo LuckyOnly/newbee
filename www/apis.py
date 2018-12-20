@@ -5,7 +5,7 @@ import logging
 from transwarp.web import ctx
 
 class Page(object):
-    def __init__(self,item_count,page_index=1,page_size = 15):
+    def __init__(self,item_count,page_index=1,page_size = 2):
         # item_count:总页数, page_count:总页数, page_index: 当前所在页, offset:当前页的第一个编号, limit:每页展示的个数
         self.item_count = item_count
         self.page_size = page_size
@@ -45,6 +45,10 @@ class APIValueError(APIError):
     '''
     def __init__(self, field, message=''):
         super(APIValueError, self).__init__('value:invalid', field, message)
+
+class APIResourceNotFoundError(APIError):
+    def __init__(self,message=''):
+        super(APIResourceNotFoundError,self).__init__('can not find resource:',message)
 
 def _dump(obj):
     if isinstance(obj,Page):
