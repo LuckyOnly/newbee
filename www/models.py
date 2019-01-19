@@ -16,6 +16,18 @@ class User(Model):
     image = StringField(ddl='varchar(500)')
     created_at = FloatField(updateable=False,default=time.time)
 
+class Accounts(Model):
+    __table__ = 'accounts'
+
+    id = StringField(primary_key=True, default=next_id(),ddl='varchar(50)')
+    name = StringField(ddl='varchar(50)')
+    url = StringField(updateable=False, ddl='varchar(200)')
+    accname = StringField(ddl='varchar(50)')
+    password = StringField(ddl='varchar(50)')
+    admin = BooleanField()
+    detail = StringField(updateable=False, ddl='varchar(200)')
+    created_at = FloatField(updateable=False,default=time.time)
+
 
 class Blog(Model):
     __table__ = 'blogs'

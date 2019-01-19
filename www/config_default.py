@@ -5,7 +5,7 @@ configs = {
         'username' : 'root',
         'password' : 'root',
         'database':'house',
-        'port' : 3306
+        'port' : 32768
     },
     'session':{
     'secret':'AwEsOmE'

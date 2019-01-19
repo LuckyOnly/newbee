@@ -1,6 +1,6 @@
 # coding:utf-8
 
-from models import User, Blog, Comment
+from models import User, Blog, Comment,Accounts
 from transwarp import db
 import ConfigParser
 import os
@@ -23,7 +23,10 @@ logging.basicConfig(level=logging.DEBUG)
 # 查找
 # u1 = User.find_first('select * from users where admin = ?',1)
 # u1 = User.find_first('where admin = ?',0)
-blogs = Blog.find_all("where 1=1")
+# blogs = Blog.find_all("where 1=1")
+# print blogs
+name='confluence'
+blogs = Accounts.find_all('where name=?',name)
 print blogs
 # print u1
 # 删除
