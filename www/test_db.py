@@ -25,9 +25,14 @@ logging.basicConfig(level=logging.DEBUG)
 # u1 = User.find_first('where admin = ?',0)
 # blogs = Blog.find_all("where 1=1")
 # print blogs
-name='confluence'
-blogs = Accounts.find_all('where name=?',name)
-print blogs
+# name='confluence'
+# blogs = Accounts.find_all('where name=?',name)
+# print blogs
+# account_insert = Accounts(name='学习资料', url='192.168.50.248', accname='cmmi', passwd='cmmi', admin=1, detail='常用软件')
+# account_insert.insert()
+
+account = Accounts.get('001548073299212d6600111951d49cf832fe1b61202cad8000')
+account.delete()
 # print u1
 # 删除
 # u1.delete()

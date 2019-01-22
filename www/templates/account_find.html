@@ -17,15 +17,16 @@
                     },
                     next: function () {
                         gotoPage(this.page.page_index + 1);
+
                     },
                     delete_comment: function (comment) {
-                        var content = comment.content.length > 20 ? comment.content.substring(0, 20) + '...' : comment.content;
-                        showConfirm('确认删除？', '确认要删除评论“' + comment.content + '”？删除后不可恢复！', function () {
-                            postApi('/api/comments/' + comment.id + '/delete', {}, function (err, r) {
+                        var content = comment.name.length > 20 ? comment.name.substring(0, 20) + '...' : comment.name;
+                        showConfirm('确认删除？', '确认要删除评论“' + content + '”？删除后不可恢复！', function () {
+                            postApi('/api/accounts/' + comment.id + '/delete', {}, function (err, r) {
                                 if (err) {
                                     return showError(err);
                                 }
-                                location.reload();
+                                alert('删除成功');
                             });
                         });
                     }
@@ -42,34 +43,35 @@
                 initVM(results);
             });
         });
-
+        {# 查询#}
         $(function () {
-            var vm=new Vue({
-                el:'#form-register',
-                data:{
-                    name:''
+            var vm = new Vue({
+                el: '#form-register',
+                data: {
+                    name: ''
                 },
-                methods:{
-                    submit:function (event) {
+                methods: {
+                    submit: function (event) {
                         event.preventDefault();
-                        if(!this.name.trim()){
+                        alert(this.name);
+                        if (!this.name.trim()) {
                             return showError('请输入名称');
                         }
                         startLoading();
-                        postApi('/api/accfind',{
-                            name:this.name
-                        },function (err,r) {
-                            if(err){
+                        postApi('/api/accounts/find',this.name, function (err, r) {
+                            if (err) {
                                 showError(err);
-                            }else{
-                                return location.assign('/accounts');
+                            } else {
+{#                                return location.assign('/manage/accounts');#}
+                                $('#div-loading').hide();
+                                initVM(r);
                             }
-                            stopLoading();
+{#                            stopLoading();#}
                         });
                     }
                 }
             });
-         });
+        });
 
     </script>
 {% endblock %}
@@ -87,17 +89,22 @@
     </div>
 
     <div class="uk-width-2-3">
-        <form id="form-register" v-on="submit:submit" class="uk-form uk-form-stacked">
-            <div class="uk-alert uk-alert-danger uk-hidden"></div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">名称：</label>
-                <div class="uk-form-controls">
-                    <input v-model="name" type="text" maxlength="50" placeholder="名称" class="uk-width-1-1">
-                </div>
-            </div>
-            <div class="uk-form-row">
-                <button type="submit" class="uk-button uk-button-primary"><i class="uk-icon-user"></i> 查询</button>
-            </div>
+        <form id="form-register" v-on="submit:submit" class="uk-form uk-form-horizontal">
+            <fieldset>
+                <tr>
+                    <th class="uk-width-1-2"><input v-model="name" type="text" maxlength="50" placeholder="名称"></th>
+                    <th class="uk-width-2-5">
+                        <button type="submit" class="uk-button uk-button-primary"><i class="uk-icon-user"> 查询</i>
+                        </button>
+                    </th>
+                    <th class="uk-width-2-5"></th>
+                    <th class="uk-width-2-5">
+                        <a  href="/manage/accounts/create"><i class="uk-icon-users"> 添加</i>
+                        </a>
+                    </th>
+                </tr>
+
+            </fieldset>
         </form>
     </div>
     <div id="div-account" class="uk-width-1-1" style="display:none">
@@ -105,9 +112,11 @@
             <thead>
             <tr>
                 <th class="uk-width-2-10">名称</th>
-                <th class="uk-width-5-10">地址</th>
+                <th class="uk-width-4-10">地址</th>
                 <th class="uk-width-2-10">账号</th>
                 <th class="uk-width-1-10">密码</th>
+                <th class="uk-width-1-10">操作</th>
+
             </tr>
             </thead>
             <tbody>
@@ -122,8 +131,11 @@
                     <span v-text="u.accname"></span>
                 </td>
                 <td>
-                    {#                        <a href="#0" v-on="click: delete_comment(comment)"/><i class="uk-icon-trash-o"></i>#}
+
                     <span v-text="u.passwd"></span>
+                </td>
+                <td>
+                    <a href="#0" v-on="click: delete_comment(u)"><i class="uk-icon-trash-o"></i></a>
                 </td>
             </tr>
             </tbody>

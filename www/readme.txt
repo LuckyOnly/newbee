@@ -1,6 +1,10 @@
 后端API包括：
 获取账号：GET /api/accounts
 
+创建账号：POST /api/accounts/create
+
+查询账号：POST /api/accounts/find
+
 （未实现）获取日志：GET /api/blogs
 
 创建日志：POST /api/blogs
@@ -20,6 +24,7 @@
 (未实现)获取用户：GET /api/users
 
 管理页面包括：
+添加账户页：GET /manage/accounts/create
 
 账户列表页：GET /manage/accounts
 

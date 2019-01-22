@@ -6,6 +6,7 @@ from apis import api, Page, APIValueError, APIError, APIPermissionError, APIReso
 from configs import configs
 import time
 import logging
+import re, hashlib
 
 _COOKIE_NAME = 'zongff'
 _COOKIE_KEY = configs['session']['secret']
@@ -13,7 +14,8 @@ _COOKIE_KEY = configs['session']['secret']
 
 def make_signed_cookie(user_id, password, max_age):
     expires = str(int(time.time()) + (max_age or 86400))
-    signed_cookie = [user_id, expires, hashlib.md5('%s-%s-%s-%s' % (user_id, password, expires, _COOKIE_KEY)).hexdigest()]
+    signed_cookie = [user_id, expires,
+                     hashlib.md5('%s-%s-%s-%s' % (user_id, password, expires, _COOKIE_KEY)).hexdigest()]
     return '-'.join(signed_cookie)
 
 
@@ -26,7 +28,7 @@ def parse_signed_cookie(cookie_str):
         if int(expires) < time.time():
             return None
         user = User.get(user_id)
-        logging.info('password', user.password)
+        # logging.info('password', user.password)
         if user is None:
             return None
         if md5 != hashlib.md5('%s-%s-%s-%s' % (user_id, user.password, expires, _COOKIE_KEY)).hexdigest():
@@ -38,6 +40,7 @@ def parse_signed_cookie(cookie_str):
 
 def check_admin():
     user = ctx.request.user
+    print user
     if user and user.admin:
         return
     raise APIPermissionError('No permission')
@@ -48,6 +51,7 @@ def _get_page_index():
     try:
         page_index = int(ctx.request.get('page', '1'))
     except ValueError:
+        # page_index = 1
         pass
     return page_index
 
@@ -57,6 +61,18 @@ def _get_blogs_by_page():
     page = Page(total, _get_page_index())
     blogs = Blog.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
     return blogs, page
+
+
+_RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
+_RE_EMAIL = re.compile(r'[0-9a-z\.\-\_]+\@[0-9a-z\.\-\_]+(\.[0-9a-z\.\-\_]+){1,4}')
+
+
+def _get_accounts_by_page():
+    total = Accounts.count_all()
+    page = Page(total, _get_page_index())
+    print page
+    accounts = Accounts.find_all('order by created_at desc limit ?,?', page.offset, page.limit)
+    return accounts, page
 
 
 @interceptor('/')
@@ -87,6 +103,7 @@ def api_get_blogs():
     blogs, page = _get_blogs_by_page()
     return dict(blogs=blogs, page=page)
 
+
 # 日志列表页
 @view('manage_blog_list.html')
 @get('/manage/blogs')
@@ -95,15 +112,16 @@ def manage_blogs():
     return dict(page_index=_get_blogs_by_page())
 
 
-@api
-@post('/api/comments/:comment_id/delete')
-def api_delete_comment(comment_id):
-    check_admin()
-    comment = Comment.get(comment_id)
-    if comment is None:
-        raise APIValueError('comment')
-    comment.delete()
-    raise dict(id=comment_id)
+# @api
+# @post('/api/comments/:comment_id/delete')
+# def api_delete_comment(comment_id):
+#     check_admin()
+#     comment = Comment.get(comment_id)
+#     if comment is None:
+#         raise APIValueError('comment')
+#     comment.delete()
+#     raise dict(id=comment_id)
+
 
 
 # @view('test_users.html')
@@ -118,16 +136,7 @@ def test_users():
 @get('/test')
 def test_users():
     users = User.find_first('where admin = ?', 0)
-    # print users.name
     return dict(users=users)
-    # return '<h1>hello</h1>'
-
-
-def _get_blogs_by_page():
-    total = Blog.count_all()
-    page = Page(total, _get_page_index())
-    blogs = Blog.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
-    return blogs, page
 
 
 @view('blogs.html')
@@ -136,8 +145,9 @@ def index():
     blogs, page = _get_blogs_by_page()
     return dict(page=page, blogs=blogs, user=ctx.request.user)
 
+
 # 首页
-@view('blogs1.html')
+@view('blogs.html')
 @get('/')
 def index():
     blogs = Blog.find_all("where 1=1")
@@ -186,12 +196,6 @@ def authenticate():
     return user
 
 
-import re, hashlib
-
-_RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
-_RE_EMAIL = re.compile(r'[0-9a-z\.\-\_]+\@[0-9a-z\.\-\_]+(\.[0-9a-z\.\-\_]+){1,4}')
-
-
 # 注册api
 @api
 @post('/api/users')
@@ -219,6 +223,33 @@ def register_user():
     ctx.response.set_cookie(_COOKIE_NAME, cookie)
     return user
 
+@api
+@post('/api/accounts/create')
+def api_create_accounts():
+    i = ctx.request.input(name='',url='',accname='',passwd='',admin='',detail='')
+    name = i['name'].strip()
+    url=i['url'].strip()
+    accname =i['accname'].strip()
+    passwd = i['passwd'].strip()
+    admin = i['admin'].strip()
+    detail = i['detail'].strip()
+    account_insert = Accounts(name=name,url=url,accname=accname,passwd=passwd,admin=admin,detail=detail)
+    account_insert.insert()
+    return account_insert
+
+@api
+@post('/api/accounts/find')
+def api_create_accounts():
+    content = ctx.request.input(name='')
+    # name = content['name'].strip()
+    name ='学习资料'
+    # account_select = Accounts.find_first('where admin=?',1)
+    # size = len(account_select)
+    size =1
+    page = Page(size, _get_page_index())
+    accounts = Accounts.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
+    return dict(accounts=accounts, page=page)
+
 
 @api
 @get('/api/accounts')
@@ -229,18 +260,12 @@ def api_get_accounts():
     return dict(accounts=accounts, page=page)
 
 
-def _get_accounts_by_page():
-    total = Accounts.count_all()
-    page = Page(total, _get_page_index())
-    accounts = Accounts.find_all('order by created_at desc limit ?,?', page.offset, page.limit)
-    print '----------------', accounts
-    return accounts, page
-
 # 账户列表页
 @view('account_find.html')
-@get('/accounts')
+@get('/manage/accounts')
 def find_accounts():
-    return dict(page_index=_get_accounts_by_page())
+    return dict(page_index=_get_page_index(), user=ctx.request.user)
+
 
 # 创建日志
 @api
@@ -262,11 +287,44 @@ def api_create_blog():
     return blog
 
 
+# 删除评论api
+@api
+@post('/api/comments/:comment_id/delete')
+def api_delete_comment(comment_id):
+    check_admin()
+    comment = Comment.get(comment_id)
+    if comment is None:
+        raise APIResourceNotFoundError('Comment')
+    comment.delete()
+    return dict(id=comment_id)
+
+@api
+@post('/api/accounts/:comment_id/delete')
+def api_delete_comment(comment_id):
+    check_admin()
+    comment = Accounts.get(comment_id)
+    if comment is None:
+        raise APIResourceNotFoundError('Comment')
+    comment.delete()
+    return dict(id=comment_id)
+
+
+# 获取评论
+@api
+@get('/api/comments')
+def api_get_comments():
+    total = Comment.count_all()
+    page = Page(total, _get_page_index())
+    comments = Comment.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
+    return dict(comments=comments, page=page)
+
+
 # 登录页
 @view('signin.html')
 @get('/signin')
 def signin():
     return dict()
+
 
 # 注销页
 @get('signout')
@@ -286,11 +344,13 @@ def register():
 def manage_index():
     raise seeother('/manage/comments')
 
+
 # 评论列表页
 @view('manage_comment_list.html')
 @get('/manage/comments')
 def manage_comments():
     return dict(page_index=_get_page_index(), user=ctx.request.user)
+
 
 # 创建日志页
 @view('manage_blog_edit.html')
@@ -298,25 +358,12 @@ def manage_comments():
 def blogs():
     return dict(id=None, action='/api/blogs', redirect='/manage/blogs', user=ctx.request.user)
 
-# 删除评论api
-@api
-@post('/api/comments/:comment_id/delete')
-def api_delete_comment(comment_id):
-    check_admin()
-    comment = Comment.get(comment_id)
-    if comment is None:
-        raise APIResourceNotFoundError('Comment')
-    comment.delete()
-    return dict(id=comment_id)
 
-# 获取评论
-@api
-@get('/api/comments')
-def api_get_comments():
-    total = Comment.count_all()
-    page = Page(total, _get_page_index())
-    comments = Comment.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
-    return dict(comments=comments, page=page)
+# 创建账号页
+@view('account_add.html')
+@get('/manage/accounts/create')
+def account_create():
+    return dict(id=None, action='/api/accounts/create', redirect='/manage/accounts', user=ctx.request.user)
 
 
 if __name__ == '__main__':

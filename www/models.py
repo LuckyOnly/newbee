@@ -2,7 +2,7 @@
 
 import time,uuid
 from transwarp.db import next_id
-from transwarp.orm import Model,StringField,BooleanField,FloatField,TextField
+from transwarp.orm import Model,StringField,BooleanField,FloatField,TextField,IntegerField
 
 
 class User(Model):
@@ -23,8 +23,8 @@ class Accounts(Model):
     name = StringField(ddl='varchar(50)')
     url = StringField(updateable=False, ddl='varchar(200)')
     accname = StringField(ddl='varchar(50)')
-    password = StringField(ddl='varchar(50)')
-    admin = BooleanField()
+    passwd = StringField(ddl='varchar(50)')
+    admin = IntegerField()
     detail = StringField(updateable=False, ddl='varchar(200)')
     created_at = FloatField(updateable=False,default=time.time)
 

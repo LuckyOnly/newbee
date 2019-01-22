@@ -28,7 +28,8 @@ function initVM(data) {
                         if (err) {
                             return showError(err);
                         }
-                        location.reload();
+{#                        location.reload();#}
+                        alert('删除成功'+r)
                     });
                 });
             }
@@ -88,7 +89,7 @@ $(function() {
                         <span v-text="comment.created_at.toDateTime()"></span>
                     </td>
                     <td>
-                        <a href="#0" v-on="click: delete_comment(comment)"></a><i class="uk-icon-trash-o"></i>
+                        <a href="#0" v-on="click: delete_comment(comment)"><i class="uk-icon-trash-o"></i></a>
                     </td>
                 </tr>
             </tbody>
