@@ -44,34 +44,34 @@
             });
         });
         {# 查询#}
-        $(function () {
-            var vm = new Vue({
-                el: '#form-register',
-                data: {
-                    name: ''
-                },
-                methods: {
-                    submit: function (event) {
-                        event.preventDefault();
-                        alert(this.name);
-                        if (!this.name.trim()) {
-                            return showError('请输入名称');
-                        }
-                        startLoading();
-                        postApi('/api/accounts/find',this.name, function (err, r) {
-                            if (err) {
-                                showError(err);
-                            } else {
-{#                                return location.assign('/manage/accounts');#}
-                                $('#div-loading').hide();
-                                initVM(r);
-                            }
-{#                            stopLoading();#}
-                        });
-                    }
-                }
-            });
-        });
+        {#        $(function () {#}
+        {#            var vm = new Vue({#}
+        {#                el: '#form-register',#}
+        {#                data: {#}
+        {#                    name: ''#}
+        {#                },#}
+        {#                methods: {#}
+        {#                    submit: function (event) {#}
+        {#                        event.preventDefault();#}
+        {#                        alert(this.name);#}
+        {#                        if (!this.name.trim()) {#}
+        {#                            return showError('请输入名称');#}
+        {#                        }#}
+        {#                        startLoading();#}
+        {#                        postApi('/api/accounts/find', this.name, function (err, r) {#}
+        {#                            if (err) {#}
+        {#                                showError(err);#}
+        {#                            } else {#}
+        {#                                return location.assign('/manage/accounts');#}
+        {#                                $('#div-loading').hide();#}
+        {#                                initVM(r);#}
+        {#                            }#}
+        {#                            stopLoading();#}
+        {#                        });#}
+        {#                    }#}
+        {#                }#}
+        {#            });#}
+        {#        });#}
 
     </script>
 {% endblock %}
@@ -88,25 +88,17 @@
         <div class="uk-alert uk-alert-danger uk-hidden"></div>
     </div>
 
-    <div class="uk-width-2-3">
-        <form id="form-register" v-on="submit:submit" class="uk-form uk-form-horizontal">
-            <fieldset>
-                <tr>
-                    <th class="uk-width-1-2"><input v-model="name" type="text" maxlength="50" placeholder="名称"></th>
-                    <th class="uk-width-2-5">
-                        <button type="submit" class="uk-button uk-button-primary"><i class="uk-icon-user"> 查询</i>
-                        </button>
-                    </th>
-                    <th class="uk-width-2-5"></th>
-                    <th class="uk-width-2-5">
-                        <a  href="/manage/accounts/create"><i class="uk-icon-users"> 添加</i>
-                        </a>
-                    </th>
-                </tr>
 
-            </fieldset>
-        </form>
+
+    <div class="uk-width-1-1">
+        <tr>
+            <th><a href="/manage/find" class="uk-button uk-button-primary uk-width-2-10" ><i class="uk-icon-users"> 查询 </i></a></th>
+            <th><a  class="uk-button uk-button-primary uk-width-2-10" href="/manage/accounts/create"><i class="uk-icon-users"> 添加 </i></a></th>
+        </tr>
     </div>
+
+
+
     <div id="div-account" class="uk-width-1-1" style="display:none">
         <table class="uk-table uk-table-hover">
             <thead>

@@ -1,0 +1,128 @@
+{% extends '__base__.html' %}
+{% block title %}账号{% endblock %}
+{% block beforehead %}
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js" xmlns:v-on="http://www.w3.org/1999/xhtml"
+            xmlns:v-on="http://www.w3.org/1999/xhtml"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/0.12.16/vue.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="uk-width-1-1 uk-margin-bottom">
+        <div class="uk-panel uk-panel-box">
+            <ul class="uk-breadcrumb">
+                <li><span>账号</span></li>
+                <li class="uk-active"><span>查询</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="uk-width-1-1">
+        <div class="uk-alert uk-alert-danger uk-hidden"></div>
+    </div>
+    <div id="tags" class="uk-width-1-1">
+{#        <ul id="tags">#}
+{#            <li v-repeat="tag:tags">#}
+{#                <span v-text="tag.name"></span>#}
+{#            </li>#}
+{#            <li>#}
+{#            </li>#}
+{#        </ul>#}
+                <input v-model="search" type="text" maxlength="50" placeholder="查询名称">
+                <button value="查询" class="uk-button uk-button-primary " v-on="click:myClick">查询</button>
+                <a value="返回" class="uk-button uk-button-primary " href="/manage/accounts">返回</a>
+
+
+    </div>
+
+
+    <div id="div-account" class="uk-width-1-1" style="display:block">
+        <table class="uk-table uk-table-hover">
+            <thead>
+            <tr>
+                <th class="uk-width-2-10">名称</th>
+                <th class="uk-width-4-10">地址</th>
+                <th class="uk-width-2-10">账号</th>
+                <th class="uk-width-1-10">密码</th>
+                <th class="uk-width-1-10">操作</th>
+
+            </tr>
+            </thead>
+            <tbody>
+
+            <tr v-repeat="u:accounts">
+                <td>
+                    <span v-text="u.name"></span>
+                </td>
+                <td>
+                    <span v-text="u.url"></span>
+                </td>
+                <td>
+                    <span v-text="u.accname"></span>
+                </td>
+                <td>
+                    <span v-text="u.passwd"></span>
+                </td>
+                <td>
+                    <a href="#0" v-on="click: delete_comment(u)"><i class="uk-icon-trash-o"></i></a>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+            <div class="uk-width-1-1 uk-text-center">
+            <ul class="uk-pagination">
+                <li v-if="! page.has_previous" class="uk-disabled"><span><i
+                        class="uk-icon-angle-double-left"></i></span></li>
+                <li v-if="page.has_previous"><a v-on="click: previous()" href="#0"><i
+                        class="uk-icon-angle-double-left"></i></a></li>
+                <li class="uk-active"><span v-text="page.page_index"></span></li>
+                <li v-if="! page.has_next" class="uk-disabled"><span><i class="uk-icon-angle-double-right"></i></span>
+                </li>
+                <li v-if="page.has_next"><a v-on="click: next()" href="#0"><i
+                        class="uk-icon-angle-double-right"></i></a></li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        var tag = new Vue({
+            el: '#tags',
+            data: {
+                tags: [{name: '标签一'}, {name: '标签二'}, {name: '标签三'}],
+                search: ''
+            },
+            methods: {
+                myClick: function () {
+
+                    if (this.search) {
+                        getApi('/api/accounts/' + this.search + '/finds', {}, function (err, results) {
+                            if (err) {
+                                return showError(err);
+                            }
+                            initVM(results);
+                        });
+                    } else {
+                        getApi('/api/accounts/find', {}, function (err, results) {
+                            if (err) {
+                                return showError(err);
+                            }
+                            initVM(results);
+                        });
+                    }
+                }
+            }
+        });
+
+        function initVM(data) {
+
+            var vm = new Vue({
+                el: '#div-account',
+                data: {
+                    accounts: data.accounts,
+                    {#                    accounts: False,#}
+                    page: data.page
+                }
+            });
+        }
+
+    </script>
+{% endblock %}

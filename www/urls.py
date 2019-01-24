@@ -7,6 +7,7 @@ from configs import configs
 import time
 import logging
 import re, hashlib
+import urllib
 
 _COOKIE_NAME = 'zongff'
 _COOKIE_KEY = configs['session']['secret']
@@ -238,22 +239,31 @@ def api_create_accounts():
     return account_insert
 
 @api
-@post('/api/accounts/find')
-def api_create_accounts():
-    content = ctx.request.input(name='')
-    # name = content['name'].strip()
-    name ='学习资料'
-    # account_select = Accounts.find_first('where admin=?',1)
-    # size = len(account_select)
-    size =1
+@get('/api/accounts/:search/finds')
+def accounts_find_by_name(search):
+    search=urllib.unquote(search)
+    search =search.decode('utf-8')
+    sql ="where name like '%"+search+"%'"
+    size = Accounts.count_all_by_where(sql)
     page = Page(size, _get_page_index())
-    accounts = Accounts.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
-    return dict(accounts=accounts, page=page)
+    if size>0:
+        accounts = Accounts.find_by(sql+' order by created_at desc limit ?,?', page.offset, page.limit)
+        return dict(accounts=accounts, page=page)
+    else:
+        return dict(accounts=False,page=page)
 
 
 @api
 @get('/api/accounts')
 def api_get_accounts():
+    total = Accounts.count_all()
+    page = Page(total, _get_page_index())
+    accounts = Accounts.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
+    return dict(accounts=accounts, page=page)
+
+@api
+@get('/api/accounts/find')
+def api_accounts_find_init():
     total = Accounts.count_all()
     page = Page(total, _get_page_index())
     accounts = Accounts.find_by('order by created_at desc limit ?,?', page.offset, page.limit)
@@ -266,6 +276,11 @@ def api_get_accounts():
 def find_accounts():
     return dict(page_index=_get_page_index(), user=ctx.request.user)
 
+# # 查询账户列表页
+@view('account_find3.html')
+@get('/manage/find')
+def find_account():
+    return dict(page_index=_get_page_index(), user=ctx.request.user)
 
 # 创建日志
 @api
@@ -300,7 +315,7 @@ def api_delete_comment(comment_id):
 
 @api
 @post('/api/accounts/:comment_id/delete')
-def api_delete_comment(comment_id):
+def api_delete_comment_by_id(comment_id):
     check_admin()
     comment = Accounts.get(comment_id)
     if comment is None:

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-bind="http://www.w3.org/1999/xhtml"
+      xmlns:v-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/0.12.16/vue.min.js"></script>
+
+</head>
+<body>
+
+<div id="app">
+    <span v-if="seen">{{ message }}</span>
+</div>
+
+
+<div id="app-4">
+    <ol>
+        <li v-for="todo in todos">
+            {{ todo.text }}
+        </li>
+    </ol>
+
+</div>
+
+
+<div id='example-3'>
+    <input type="checkbox" id="jack" value="Jack" v-model="checkedNames">
+    <label for="jack">Jack</label>
+    <input type="checkbox" id="john" value="John" v-model="checkedNames">
+    <label for="john">John</label>
+    <input type="checkbox" id="mike" value="Mike" v-model="checkedNames">
+    <label for="mike">Mike</label>
+    <br>
+    <span>Checked names: {{ checkedNames }}</span>
+</div>
+<div id="app-2">
+  <span v-bind:title="message">
+
+    鼠标悬停几秒钟查看此处动态绑定的提示信息！
+  </span>
+</div>
+
+<div id="app-5">
+    <p>{{ message }}</p>
+    <button v-on:click="reverseMessage">逆转消息</button>
+
+</div>
+<div id="app-6">
+
+    <input v-model="message">
+    <button v-on:click="say('hi')">
+        say hi
+    </button>
+    <p>{{ message }}</p>
+</div>
+<div>
+    <ul id="tags">
+        <li v-repeat="tag:tags">
+            {{ tag.name }}
+        </li>
+    </ul>
+
+    <input type="button" value="测试" onclick="myClick();">
+</div>
+<script src="../static/js/test.js"></script>
+</body>
+</html>
